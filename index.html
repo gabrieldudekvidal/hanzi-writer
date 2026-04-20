@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Hanzi Writer - Chinese Character Animation</title>
+        <style>
+            .con-hanzi-box {
+                display: inline-block;
+            }
+
+            .hanzi-group {
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .hanzi-container {
+                width: 100px;
+                min-height: 100px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div class="con-hanzi-box">
+                <div class="hanzi-group" id="hanziGroup"></div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@2.2.1/dist/hanzi-writer.min.js"></script>
+
+        <script>
+            class HanziAnimation {
+                constructor(options = {}) {
+                    this.characters = [];
+                    this.writers = [];
+                    this.repeatTimeout = null;
+                    this.container = document.getElementById("hanziGroup");
+                    this.charInput = options.char || "";
+                    this.init();
+                }
+
+                isChinese(c) {
+                    return /^[\u4e00-\u9fa5]$/.test(c);
+                }
+
+                init() {
+                    this.destroyAll();
+
+                    const str = String(this.charInput || "").trim();
+                    this.characters = [
+                        ...new Set(
+                            str.split("").filter((c) => this.isChinese(c)),
+                        ),
+                    ];
+
+                    this.createAllWriters();
+                    this.startAnimation();
+                }
+
+                createAllWriters() {
+                    this.writers = [];
+
+                    if (this.container) {
+                        this.container.innerHTML = "";
+                    }
+
+                    for (let i = 0; i < this.characters.length; i++) {
+                        const charContainer = document.createElement("div");
+                        charContainer.className = "hanzi-container";
+                        charContainer.id = `container_${i}`;
+
+                        if (this.container) {
+                            this.container.appendChild(charContainer);
+                        }
+
+                        try {
+                            const writer = HanziWriter.create(
+                                charContainer,
+                                this.characters[i],
+                                {
+                                    width: 100,
+                                    height: 100,
+                                    padding: 5,
+                                    showOutline: true,
+                                    strokeAnimationSpeed: 1.2,
+                                    delayBetweenStrokes: 280,
+                                    loop: false,
+                                },
+                            );
+
+                            this.writers.push(writer);
+                        } catch (e) {
+                            console.warn(
+                                "Failed to create HanziWriter for",
+                                this.characters[i],
+                                e,
+                            );
+                        }
+                    }
+                }
+
+                async startAnimation() {
+                    if (this.writers.length === 0) return;
+                    for (let i = 0; i < this.writers.length; i++) {
+                        const writer = this.writers[i];
+                        if (!writer) continue;
+
+                        try {
+                            if (writer.showOutline) writer.showOutline();
+                            if (writer.animateCharacter) {
+                                await writer.animateCharacter().catch(() => {});
+                            }
+                            await new Promise((resolve) =>
+                                setTimeout(resolve, 280),
+                            );
+                        } catch (e) {}
+                    }
+                    this.repeatTimeout = setTimeout(() => {
+                        this.startAnimation();
+                    }, 1600);
+                }
+
+                destroyAll() {
+                    if (this.repeatTimeout) {
+                        clearTimeout(this.repeatTimeout);
+                        this.repeatTimeout = null;
+                    }
+
+                    if (this.container) {
+                        this.container.innerHTML = "";
+                    }
+
+                    this.writers = [];
+                }
+
+                updateCharacter(newChar) {
+                    this.charInput = newChar;
+                    this.destroyAll();
+                    this.init();
+                }
+            }
+
+            function getCharactersFromURL() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const chars = urlParams.get("chars");
+                return chars || "你好世界";
+            }
+
+            let hanziAnimation;
+
+            window.addEventListener("DOMContentLoaded", () => {
+                const characters = getCharactersFromURL();
+                hanziAnimation = new HanziAnimation({ char: characters });
+            });
+        </script>
+    </body>
+</html>
