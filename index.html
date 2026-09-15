@@ -2,8 +2,13 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+
         <title>Hanzi Writer - Chinese Character Animation</title>
+
         <style>
             .con-hanzi-box {
                 display: inline-block;
@@ -15,145 +20,1080 @@
                 flex-wrap: wrap;
             }
 
+            .hanzi-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
             .hanzi-container {
-                width: 100px;
-                min-height: 100px;
+                width: 80px;
+                min-height: 80px;
+            }
+
+            .stroke-count {
+                text-align: center;
+                font-size: 12px;
+                color: #888;
+                margin-top: 2px;
+            }
+
+            /* =========================
+               Writing Practice
+            ========================= */
+
+            .practice-box {
+                margin-top: 30px;
+                width: 180px;
+                font-family: sans-serif;
+            }
+
+            .practice-title {
+                font-size: 14px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+
+            .practice-character {
+                font-size: 18px;
+                color: #888;
+                margin-bottom: 8px;
+            }
+
+            .practice-characters {
+                display: flex;
+                gap: 6px;
+                flex-wrap: wrap;
+                margin-bottom: 10px;
+            }
+
+            .practice-character-button {
+                width: 32px;
+                height: 32px;
+                padding: 0;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: #f8f8f8;
+                color: #222;
+                font-size: 18px;
+                cursor: pointer;
+            }
+
+            .practice-character-button.active {
+                border-color: #222;
+                background: #222;
+                color: #fff;
+            }
+
+            .practice-canvas-container {
+                position: relative;
+                width: 180px;
+                height: 180px;
+                overflow: hidden;
+
+                border: 1px solid #ddd;
+                border-radius: 12px;
+
+                background:
+                    linear-gradient(
+                        to right,
+                        transparent 49.5%,
+                        #e8e8e8 49.5%,
+                        #e8e8e8 50.5%,
+                        transparent 50.5%
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        transparent 49.5%,
+                        #e8e8e8 49.5%,
+                        #e8e8e8 50.5%,
+                        transparent 50.5%
+                    ),
+                    #fafafa;
+            }
+
+            .practice-guide {
+                position: absolute;
+                inset: 0;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                font-family:
+                    "PingFang SC",
+                    "Hiragino Sans GB",
+                    "Microsoft YaHei",
+                    sans-serif;
+
+                font-size: 150px;
+                font-weight: 400;
+
+                color: rgba(0, 0, 0, 0.08);
+
+                pointer-events: none;
+                user-select: none;
+            }
+
+            #practiceCanvas {
+                position: absolute;
+                inset: 0;
+
+                width: 100%;
+                height: 100%;
+
+                cursor: crosshair;
+                touch-action: none;
+            }
+
+            .practice-controls {
+                display: flex;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .practice-button {
+                padding: 7px 11px;
+
+                border: 0;
+                border-radius: 8px;
+
+                background: #f1f1f1;
+                color: #222;
+
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            .practice-button:hover {
+                background: #e7e7e7;
             }
         </style>
     </head>
+
     <body>
         <div id="app">
             <div class="con-hanzi-box">
-                <div class="hanzi-group" id="hanziGroup"></div>
+
+                <!-- =========================
+                     Hanzi Animation
+                ========================= -->
+
+                <div
+                    class="hanzi-group"
+                    id="hanziGroup"
+                ></div>
+
+
+                <!-- =========================
+                     Writing Practice
+                ========================= -->
+
+                <div class="practice-box">
+
+                    <div class="practice-title">
+                        Practice Writing
+                    </div>
+
+                    <div
+                        class="practice-characters"
+                        id="practiceCharacters"
+                    ></div>
+
+                    <div
+                        class="practice-canvas-container"
+                    >
+                        <div
+                            class="practice-guide"
+                            id="practiceGuide"
+                        >
+                            你
+                        </div>
+
+                        <canvas
+                            id="practiceCanvas"
+                        ></canvas>
+                    </div>
+
+                    <div class="practice-controls">
+
+                        <button
+                            class="practice-button"
+                            id="clearPractice"
+                        >
+                            Clear
+                        </button>
+
+                        <button
+                            class="practice-button"
+                            id="toggleGuide"
+                        >
+                            Hide Guide
+                        </button>
+
+                    </div>
+                </div>
+
             </div>
         </div>
 
+
+        <!-- Hanzi Writer -->
+
         <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@2.2.1/dist/hanzi-writer.min.js"></script>
+
 
         <script>
             class HanziAnimation {
+
                 constructor(options = {}) {
+
                     this.characters = [];
+
                     this.writers = [];
+
                     this.repeatTimeout = null;
-                    this.container = document.getElementById("hanziGroup");
-                    this.charInput = options.char || "";
+
+                    this.container =
+                        document.getElementById(
+                            "hanziGroup"
+                        );
+
+                    this.charInput =
+                        options.char || "";
+
+
+                    /* Practice elements */
+
+                    this.practiceCanvas =
+                        document.getElementById(
+                            "practiceCanvas"
+                        );
+
+                    this.practiceCharacter =
+                        document.getElementById(
+                            "practiceCharacter"
+                        );
+
+                    this.practiceCharacters =
+                        document.getElementById(
+                            "practiceCharacters"
+                        );
+
+                    this.practiceGuide =
+                        document.getElementById(
+                            "practiceGuide"
+                        );
+
+                    this.clearPractice =
+                        document.getElementById(
+                            "clearPractice"
+                        );
+
+                    this.toggleGuide =
+                        document.getElementById(
+                            "toggleGuide"
+                        );
+
+
+                    this.practiceContext = null;
+
+                    this.isDrawing = false;
+
+                    this.guideVisible = true;
+
+
                     this.init();
+
+                    this.setupPractice();
                 }
+
+
+                /* =========================
+                   Character validation
+                ========================= */
 
                 isChinese(c) {
+
                     return /^[\u4e00-\u9fa5]$/.test(c);
+
                 }
+
+
+                /* =========================
+                   Initialize
+                ========================= */
 
                 init() {
+
                     this.destroyAll();
 
-                    const str = String(this.charInput || "").trim();
+                    const str =
+                        String(
+                            this.charInput || ""
+                        ).trim();
+
+
                     this.characters = [
                         ...new Set(
-                            str.split("").filter((c) => this.isChinese(c)),
-                        ),
+                            str
+                                .split("")
+                                .filter(
+                                    (c) =>
+                                        this.isChinese(c)
+                                )
+                        )
                     ];
 
+
                     this.createAllWriters();
+
                     this.startAnimation();
+
                 }
+
+
+                /* =========================
+                   Create Hanzi Writers
+                ========================= */
 
                 createAllWriters() {
+
                     this.writers = [];
 
+
                     if (this.container) {
-                        this.container.innerHTML = "";
+
+                        this.container.innerHTML =
+                            "";
+
                     }
 
-                    for (let i = 0; i < this.characters.length; i++) {
-                        const charContainer = document.createElement("div");
-                        charContainer.className = "hanzi-container";
-                        charContainer.id = `container_${i}`;
+
+                    for (
+                        let i = 0;
+                        i < this.characters.length;
+                        i++
+                    ) {
+
+                        const character =
+                            this.characters[i];
+
+
+                        /* Wrapper */
+
+                        const charWrapper =
+                            document.createElement(
+                                "div"
+                            );
+
+                        charWrapper.className =
+                            "hanzi-item";
+
+
+                        /* Character container */
+
+                        const charContainer =
+                            document.createElement(
+                                "div"
+                            );
+
+                        charContainer.className =
+                            "hanzi-container";
+
+                        charContainer.id =
+                            `container_${i}`;
+
+
+                        /* Stroke count */
+
+                        const strokeCount =
+                            document.createElement(
+                                "div"
+                            );
+
+                        strokeCount.className =
+                            "stroke-count";
+
+                        strokeCount.textContent =
+                            "Loading...";
+
+
+                        charWrapper.appendChild(
+                            charContainer
+                        );
+
+                        charWrapper.appendChild(
+                            strokeCount
+                        );
+
 
                         if (this.container) {
-                            this.container.appendChild(charContainer);
-                        }
 
-                        try {
-                            const writer = HanziWriter.create(
-                                charContainer,
-                                this.characters[i],
-                                {
-                                    width: 100,
-                                    height: 100,
-                                    padding: 5,
-                                    showOutline: true,
-                                    strokeAnimationSpeed: 1.2,
-                                    delayBetweenStrokes: 280,
-                                    loop: false,
-                                },
+                            this.container.appendChild(
+                                charWrapper
                             );
 
-                            this.writers.push(writer);
+                        }
+
+
+                        try {
+
+                            const writer =
+                                HanziWriter.create(
+                                    charContainer,
+                                    character,
+                                    {
+                                        width: 100,
+
+                                        height: 100,
+
+                                        padding: 5,
+
+                                        showOutline: true,
+
+                                        strokeAnimationSpeed:
+                                            1.2,
+
+                                        delayBetweenStrokes:
+                                            280,
+
+                                        loop: false
+                                    }
+                                );
+
+
+                            this.writers.push(
+                                writer
+                            );
+
+
+                            /*
+                             * Load character data
+                             * to get stroke count
+                             */
+
+                            HanziWriter
+                                .loadCharacterData(
+                                    character
+                                )
+                                .then(
+                                    (charData) => {
+
+                                        const count =
+                                            charData
+                                                .strokes
+                                                .length;
+
+
+                                        strokeCount.textContent =
+                                            `${count} ${
+                                                count === 1
+                                                    ? "stroke"
+                                                    : "strokes"
+                                            }`;
+
+                                    }
+                                )
+                                .catch(
+                                    (e) => {
+
+                                        console.warn(
+                                            "Failed to load stroke data for",
+                                            character,
+                                            e
+                                        );
+
+                                        strokeCount.textContent =
+                                            "";
+
+                                    }
+                                );
+
                         } catch (e) {
+
                             console.warn(
                                 "Failed to create HanziWriter for",
-                                this.characters[i],
-                                e,
+                                character,
+                                e
                             );
+
                         }
+
                     }
+
                 }
+
+
+                /* =========================
+                   Animation
+                ========================= */
 
                 async startAnimation() {
-                    if (this.writers.length === 0) return;
-                    for (let i = 0; i < this.writers.length; i++) {
-                        const writer = this.writers[i];
+
+                    if (
+                        this.writers.length === 0
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    for (
+                        let i = 0;
+                        i < this.writers.length;
+                        i++
+                    ) {
+
+                        const writer =
+                            this.writers[i];
+
+
                         if (!writer) continue;
 
+
                         try {
-                            if (writer.showOutline) writer.showOutline();
-                            if (writer.animateCharacter) {
-                                await writer.animateCharacter().catch(() => {});
+
+                            if (
+                                writer.showOutline
+                            ) {
+
+                                writer.showOutline();
+
                             }
-                            await new Promise((resolve) =>
-                                setTimeout(resolve, 280),
+
+
+                            if (
+                                writer.animateCharacter
+                            ) {
+
+                                await writer
+                                    .animateCharacter()
+                                    .catch(
+                                        () => {}
+                                    );
+
+                            }
+
+
+                            await new Promise(
+                                (resolve) =>
+                                    setTimeout(
+                                        resolve,
+                                        280
+                                    )
                             );
+
                         } catch (e) {}
+
                     }
-                    this.repeatTimeout = setTimeout(() => {
-                        this.startAnimation();
-                    }, 1600);
+
+
+                    this.repeatTimeout =
+                        setTimeout(
+                            () => {
+                                this.startAnimation();
+                            },
+                            1600
+                        );
+
                 }
+
+
+                /* =========================
+                   Writing Practice
+                ========================= */
+
+                setupPractice() {
+
+                    if (
+                        !this.practiceCanvas
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const canvas =
+                        this.practiceCanvas;
+
+                    const rect =
+                        canvas.getBoundingClientRect();
+
+
+                    const ratio =
+                        window.devicePixelRatio ||
+                        1;
+
+
+                    canvas.width =
+                        rect.width * ratio;
+
+                    canvas.height =
+                        rect.height * ratio;
+
+
+                    const ctx =
+                        canvas.getContext(
+                            "2d"
+                        );
+
+
+                    ctx.scale(
+                        ratio,
+                        ratio
+                    );
+
+
+                    ctx.lineWidth = 4;
+
+                    ctx.lineCap =
+                        "round";
+
+                    ctx.lineJoin =
+                        "round";
+
+                    ctx.strokeStyle =
+                        "#222";
+
+
+                    this.practiceContext =
+                        ctx;
+
+
+                    /* Drawing */
+
+                    canvas.addEventListener(
+                        "pointerdown",
+                        (event) => {
+
+                            this.isDrawing =
+                                true;
+
+
+                            const position =
+                                this.getCanvasPosition(
+                                    event
+                                );
+
+
+                            ctx.beginPath();
+
+                            ctx.moveTo(
+                                position.x,
+                                position.y
+                            );
+
+
+                            canvas.setPointerCapture(
+                                event.pointerId
+                            );
+
+                        }
+                    );
+
+
+                    canvas.addEventListener(
+                        "pointermove",
+                        (event) => {
+
+                            if (
+                                !this.isDrawing
+                            ) {
+
+                                return;
+
+                            }
+
+
+                            const position =
+                                this.getCanvasPosition(
+                                    event
+                                );
+
+
+                            ctx.lineTo(
+                                position.x,
+                                position.y
+                            );
+
+                            ctx.stroke();
+
+                        }
+                    );
+
+
+                    const stopDrawing =
+                        () => {
+
+                            this.isDrawing =
+                                false;
+
+                            ctx.closePath();
+
+                        };
+
+
+                    canvas.addEventListener(
+                        "pointerup",
+                        stopDrawing
+                    );
+
+                    canvas.addEventListener(
+                        "pointercancel",
+                        stopDrawing
+                    );
+
+                    canvas.addEventListener(
+                        "pointerleave",
+                        () => {
+
+                            if (
+                                this.isDrawing
+                            ) {
+
+                                this.isDrawing =
+                                    false;
+
+                                ctx.closePath();
+
+                            }
+
+                        }
+                    );
+
+
+                    /* Clear */
+
+                    if (
+                        this.clearPractice
+                    ) {
+
+                        this.clearPractice.addEventListener(
+                            "click",
+                            () => {
+
+                                this.clearPracticeCanvas();
+
+                            }
+                        );
+
+                    }
+
+
+                    /* Toggle guide */
+
+                    if (
+                        this.toggleGuide
+                    ) {
+
+                        this.toggleGuide.addEventListener(
+                            "click",
+                            () => {
+
+                                this.guideVisible =
+                                    !this.guideVisible;
+
+
+                                if (
+                                    this.guideVisible
+                                ) {
+
+                                    this.practiceGuide.style.display =
+                                        "flex";
+
+                                    this.toggleGuide.textContent =
+                                        "Hide Guide";
+
+                                } else {
+
+                                    this.practiceGuide.style.display =
+                                        "none";
+
+                                    this.toggleGuide.textContent =
+                                        "Show Guide";
+
+                                }
+
+                            }
+                        );
+
+                    }
+
+
+                    /*
+                     * Create practice buttons
+                     * for every character
+                     */
+
+                    if (
+                        this.characters.length > 0
+                    ) {
+
+                        this.practiceCharacters.innerHTML =
+                            "";
+
+                        for (
+                            let i = 0;
+                            i < this.characters.length;
+                            i++
+                        ) {
+
+                            const character =
+                                this.characters[i];
+
+                            const button =
+                                document.createElement(
+                                    "button"
+                                );
+
+                            button.className =
+                                "practice-character-button";
+
+                            button.textContent =
+                                character;
+
+                            button.addEventListener(
+                                "click",
+                                () => {
+
+                                    this.setPracticeCharacter(
+                                        character
+                                    );
+
+                                }
+                            );
+
+                            this.practiceCharacters.appendChild(
+                                button
+                            );
+
+                        }
+
+                        this.setPracticeCharacter(
+                            this.characters[0]
+                        );
+
+                    }
+
+                }
+
+
+                /* =========================
+                   Canvas position
+                ========================= */
+
+                getCanvasPosition(event) {
+
+                    const rect =
+                        this.practiceCanvas.getBoundingClientRect();
+
+
+                    return {
+
+                        x:
+                            event.clientX -
+                            rect.left,
+
+                        y:
+                            event.clientY -
+                            rect.top
+
+                    };
+
+                }
+
+
+                /* =========================
+                   Set practice character
+                ========================= */
+
+                setPracticeCharacter(
+                    character
+                ) {
+
+                    if (
+                        this.practiceCharacter
+                    ) {
+
+                        this.practiceCharacter.textContent =
+                            character;
+
+                    }
+
+
+                    if (
+                        this.practiceGuide
+                    ) {
+
+                        this.practiceGuide.textContent =
+                            character;
+
+                    }
+
+                    if (
+                        this.practiceCharacters
+                    ) {
+
+                        const buttons =
+                            this.practiceCharacters.querySelectorAll(
+                                ".practice-character-button"
+                            );
+
+                        buttons.forEach(
+                            (button) => {
+
+                                button.classList.toggle(
+                                    "active",
+                                    button.textContent ===
+                                        character
+                                );
+
+                            }
+                        );
+
+                    }
+
+
+                    this.clearPracticeCanvas();
+
+                }
+
+
+                /* =========================
+                   Clear canvas
+                ========================= */
+
+                clearPracticeCanvas() {
+
+                    if (
+                        !this.practiceContext ||
+                        !this.practiceCanvas
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    const canvas =
+                        this.practiceCanvas;
+
+
+                    const rect =
+                        canvas.getBoundingClientRect();
+
+
+                    this.practiceContext.clearRect(
+                        0,
+                        0,
+                        rect.width,
+                        rect.height
+                    );
+
+                }
+
+
+                /* =========================
+                   Destroy
+                ========================= */
 
                 destroyAll() {
-                    if (this.repeatTimeout) {
-                        clearTimeout(this.repeatTimeout);
-                        this.repeatTimeout = null;
+
+                    if (
+                        this.repeatTimeout
+                    ) {
+
+                        clearTimeout(
+                            this.repeatTimeout
+                        );
+
+                        this.repeatTimeout =
+                            null;
+
                     }
+
 
                     if (this.container) {
-                        this.container.innerHTML = "";
+
+                        this.container.innerHTML =
+                            "";
+
                     }
 
+
                     this.writers = [];
+
                 }
 
-                updateCharacter(newChar) {
-                    this.charInput = newChar;
+
+                /* =========================
+                   Update character
+                ========================= */
+
+                updateCharacter(
+                    newChar
+                ) {
+
+                    this.charInput =
+                        newChar;
+
+
                     this.destroyAll();
+
                     this.init();
+
                 }
+
             }
+
+
+            /* =========================
+               URL
+            ========================= */
 
             function getCharactersFromURL() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const chars = urlParams.get("chars");
+
+                const urlParams =
+                    new URLSearchParams(
+                        window.location.search
+                    );
+
+
+                const chars =
+                    urlParams.get("chars");
+
+
                 return chars || "你好世界";
+
             }
+
+
+            /* =========================
+               Start
+            ========================= */
 
             let hanziAnimation;
 
-            window.addEventListener("DOMContentLoaded", () => {
-                const characters = getCharactersFromURL();
-                hanziAnimation = new HanziAnimation({ char: characters });
-            });
+
+            window.addEventListener(
+                "DOMContentLoaded",
+                () => {
+
+                    const characters =
+                        getCharactersFromURL();
+
+
+                    hanziAnimation =
+                        new HanziAnimation({
+                            char: characters
+                        });
+
+                }
+            );
+
         </script>
     </body>
 </html>
