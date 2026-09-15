@@ -10,8 +10,23 @@
         <title>Hanzi Writer - Chinese Character Animation</title>
 
         <style>
+
+            body {
+                background-color: #F5F5F5;
+                padding: 0;
+                margin: 0;
+            }
+
+            .wrapper {
+                display: flex;
+                justify-content: center;
+
+            }
+
             .con-hanzi-box {
-                display: inline-block;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .hanzi-group {
@@ -172,6 +187,8 @@
     </head>
 
     <body>
+
+    <div class="wrapper">
         <div id="app">
             <div class="con-hanzi-box">
 
@@ -236,6 +253,10 @@
 
             </div>
         </div>
+
+
+    </div>
+
 
 
         <!-- Hanzi Writer -->
@@ -1070,27 +1091,13 @@
 
             }
 
-
-            /* =========================
-               Start
-            ========================= */
+            // Start animation
 
             let hanziAnimation;
 
-
-            window.addEventListener(
-                "DOMContentLoaded",
-                () => {
-
-                    const characters =
-                        getCharactersFromURL();
-
-
-                    hanziAnimation =
-                        new HanziAnimation({
-                            char: characters
-                        });
-
+            window.addEventListener("DOMContentLoaded",() => {
+                    const characters = getCharactersFromURL();
+                    hanziAnimation = new HanziAnimation({char: characters});
                 }
             );
 
